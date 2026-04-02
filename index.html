@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>IAA 游戏变现与 ROI 算账模型 v1.0</title>
+    <title>IAA 游戏变现与 ROI 算账模型 v2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -26,842 +25,991 @@
             --gray-700: #334155;
             --gray-800: #1e293b;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f1f5f9;
+            background: #f1f5f9;
             color: var(--gray-800);
-            margin: 0;
             padding: 20px;
             line-height: 1.5;
         }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .header { text-align: center; margin-bottom: 24px; }
+        .header h1 { font-size: 22px; font-weight: 700; color: var(--gray-800); }
+        .header p { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+
+        .tabs {
+            display: flex; margin-bottom: 24px; background: #fff;
+            border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        .tab-btn {
+            flex: 1; padding: 14px 20px; font-size: 15px; font-weight: 600;
+            border: none; cursor: pointer; background: #fff; color: var(--gray-500);
+            transition: all 0.2s; border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active { color: var(--primary); background: var(--primary-light); border-bottom-color: var(--primary); }
+        .tab-btn:hover:not(.active) { background: var(--gray-50); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        /* 模块卡片 */
         .module {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            padding: 24px;
+            background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px; padding: 24px;
         }
-
         .module-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--gray-100);
+            font-size: 16px; font-weight: 600; color: var(--gray-800);
+            margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--gray-100);
         }
 
-        /* 模块1：核心指标速览 */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; }
+        .chart-card h3 { font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 16px; }
+        .chart-container { position: relative; height: 260px; }
 
-        .metric-card {
-            text-align: center;
-            padding: 20px 16px;
-            background: var(--gray-50);
-            border-radius: 8px;
-            border: 1px solid var(--gray-200);
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .kpi-card {
+            background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px; text-align: center; border-top: 3px solid var(--primary);
         }
+        .kpi-card.green { border-top-color: var(--success); }
+        .kpi-card.orange { border-top-color: var(--warning); }
+        .kpi-card.gold { border-top-color: #eab308; }
+        .kpi-label { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; }
+        .kpi-value { font-size: 24px; font-weight: 700; color: var(--gray-800); }
+        .kpi-value.big { font-size: 28px; }
+        .kpi-sub { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
 
-        .metric-label {
-            font-size: 13px;
-            color: var(--gray-600);
-            margin-bottom: 8px;
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th {
+            text-align: left; padding: 10px 12px; background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200); font-weight: 600; color: var(--gray-600); white-space: nowrap;
         }
+        .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
+        .data-table tr:hover td { background: var(--gray-50); }
+        .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .highlight { color: var(--primary); font-weight: 600; }
+        .highlight-gold { color: #b45309; font-weight: 700; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .tag-t1 { background: #dbeafe; color: #1e40af; }
+        .tag-t2 { background: #fef3c7; color: #92400e; }
+        .tag-t3 { background: #fee2e2; color: #991b1b; }
 
-        .metric-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 6px;
+        .region-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .region-btn {
+            padding: 8px 20px; border: 2px solid var(--gray-200); border-radius: 8px;
+            background: #fff; font-size: 14px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; color: var(--gray-600);
         }
+        .region-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .region-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
 
-        .metric-desc {
-            font-size: 11px;
-            color: var(--gray-500);
-        }
-
-        /* 模块2：基础业务输入 */
-        .input-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .input-group label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--gray-600);
-        }
-
+        .input-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+        .input-row.col4 { grid-template-columns: repeat(4, 1fr); }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 13px; font-weight: 500; color: var(--gray-600); }
         .input-group input {
-            padding: 8px 12px;
-            border: 1px solid var(--gray-300);
-            border-radius: 6px;
-            font-size: 14px;
-            width: 100%;
+            padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px; width: 100%;
         }
+        .input-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .metric-card {
+            text-align: center; padding: 20px 16px; background: var(--gray-50);
+            border-radius: 8px; border: 1px solid var(--gray-200);
         }
+        .metric-label { font-size: 13px; color: var(--gray-600); margin-bottom: 8px; }
+        .metric-value { font-size: 26px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+        .metric-desc { font-size: 11px; color: var(--gray-500); }
 
         .lt-box {
-            background: var(--success-light);
-            border: 1px solid #bbf7d0;
-            border-radius: 6px;
-            padding: 12px 16px;
-            text-align: center;
-            margin-top: 12px;
+            background: var(--success-light); border: 1px solid #bbf7d0; border-radius: 6px;
+            padding: 12px 16px; text-align: center; margin-top: 12px;
         }
+        .lt-label { font-size: 13px; color: #166534; }
+        .lt-value { font-size: 20px; font-weight: 700; color: #15803d; margin-top: 4px; }
 
-        .lt-label {
-            font-size: 13px;
-            color: #166534;
+        .ad-table-wrap { border: 1px solid var(--gray-200); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+        .ad-row {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px;
+            padding: 12px 16px; align-items: center; border-bottom: 1px solid var(--gray-100); transition: background 0.2s;
         }
-
-        .lt-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #15803d;
-            margin-top: 4px;
+        .ad-row:hover { background: var(--gray-50); }
+        .ad-row.header {
+            background: var(--gray-50); border-bottom: 2px solid var(--gray-200);
+            font-weight: 600; font-size: 13px; color: var(--gray-600);
         }
-
-        /* 模块3：广告参数表格 - 已改用div布局 */
-
-        .ad-table {
-            width: 100%;
+        .ad-row.header:hover { background: var(--gray-50); }
+        .ad-row.footer { background: var(--gray-50); border-bottom: none; }
+        .ad-row.footer:hover { background: var(--gray-50); }
+        .ad-row input {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;
         }
+        .ad-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .arpu-val { font-weight: 600; color: var(--success); font-size: 15px; }
 
         .decay-row {
-            background: var(--gray-50);
-            padding: 12px 16px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+            background: var(--gray-50); padding: 12px 16px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
         }
-
-        .decay-label {
-            font-size: 13px;
-            color: var(--gray-600);
-        }
-
-        .decay-input {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-
-        .decay-input input {
-            width: 60px;
-            padding: 4px 8px;
-            border: 1px solid var(--gray-300);
-            border-radius: 4px;
-            text-align: center;
-        }
+        .decay-label { font-size: 13px; color: var(--gray-600); }
+        .decay-input { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .decay-input input { width: 60px; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 4px; text-align: center; }
 
         .arpu-bar {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            background: var(--warning-light);
-            border: 1px solid #fde68a;
-            padding: 16px;
-            border-radius: 6px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            background: var(--warning-light); border: 1px solid #fde68a; padding: 16px; border-radius: 6px;
         }
+        .arpu-item { text-align: center; }
+        .arpu-label { font-size: 12px; color: var(--warning); font-weight: 600; margin-bottom: 4px; }
+        .arpu-value { font-size: 20px; font-weight: 700; color: var(--gray-800); }
 
-        .arpu-item {
-            text-align: center;
-        }
-
-        .arpu-label {
-            font-size: 12px;
-            color: var(--warning);
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .arpu-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--gray-800);
-        }
-
-        /* 模块4：财务结算 */
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
+        .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
         .result-card {
-            padding: 16px;
-            background: #fff;
-            border: 1px solid var(--gray-200);
-            border-radius: 6px;
-            border-left: 4px solid var(--primary);
+            padding: 16px; background: #fff; border: 1px solid var(--gray-200);
+            border-radius: 6px; border-left: 4px solid var(--primary);
         }
-
-        .result-card.success {
-            border-left-color: var(--success);
-        }
-
-        .result-card.roi {
-            border-left-color: var(--gray-400);
-        }
-
-        .result-label {
-            font-size: 12px;
-            color: var(--gray-500);
-            margin-bottom: 4px;
-        }
-
-        .result-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--gray-800);
-            margin-bottom: 8px;
-        }
-
+        .result-card.success { border-left-color: var(--success); }
+        .result-card.roi { border-left-color: var(--gray-400); }
+        .result-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+        .result-value { font-size: 24px; font-weight: 700; color: var(--gray-800); margin-bottom: 8px; }
         .result-formula {
-            font-size: 11px;
-            color: var(--gray-400);
-            font-family: monospace;
-            background: var(--gray-50);
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
+            font-size: 11px; color: var(--gray-400); font-family: monospace;
+            background: var(--gray-50); padding: 4px 8px; border-radius: 4px; display: inline-block;
         }
-
         .roi-details {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--gray-600);
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px dashed var(--gray-200);
+            display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-600);
+            margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--gray-200);
         }
 
-        /* 模块5：行业参考 */
-        .ref-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            margin-bottom: 20px;
+        .wan-arpu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .wan-arpu-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px; padding: 24px; color: #fff; text-align: center;
         }
+        .wan-arpu-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .wan-arpu-title { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+        .wan-arpu-num { font-size: 32px; font-weight: 700; }
+        .wan-arpu-sub { font-size: 11px; opacity: 0.8; margin-top: 6px; }
 
-        .ref-table-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--primary);
-        }
-
-        .ref-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .ref-table th {
-            text-align: left;
-            padding: 8px;
-            background: var(--gray-50);
-            border-bottom: 1px solid var(--gray-200);
-            font-weight: 500;
-            color: var(--gray-600);
-        }
-
-        .ref-table td {
-            padding: 8px;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .ref-table td:last-child {
-            text-align: right;
-            font-weight: 600;
-        }
-
-        .ref-note {
-            background: var(--warning-light);
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--gray-700);
-        }
-
-        .ref-note ul {
-            margin: 8px 0 0 20px;
-            padding: 0;
-        }
-
-        /* 响应式 */
         @media (max-width: 900px) {
-            body {
-                padding: 12px;
-            }
-
-            .module {
-                padding: 16px;
-                margin-bottom: 16px;
-            }
-
-            .module-title {
-                font-size: 15px;
-                margin-bottom: 16px;
-            }
-
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-
-            .metric-card {
-                padding: 12px 8px;
-            }
-
-            .metric-label {
-                font-size: 11px;
-            }
-
-            .metric-value {
-                font-size: 22px;
-            }
-
-            .metric-desc {
-                font-size: 10px;
-            }
-
-            .input-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .input-group input {
-                font-size: 16px; /* 防止iOS自动缩放 */
-                padding: 10px 12px;
-            }
-
-            /* 广告参数表格响应式 - 已改用div布局 */
-
-            .decay-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-
-            .decay-label {
-                font-size: 12px;
-            }
-
-            .decay-input {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .decay-input input {
-                width: 50px;
-                font-size: 16px;
-            }
-
-            .arpu-bar {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .arpu-item {
-                padding-bottom: 12px;
-                border-bottom: 1px dashed #fcd34d;
-            }
-
-            .arpu-item:last-child {
-                border-bottom: none;
-                padding-bottom: 0;
-            }
-
-            .result-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .result-value {
-                font-size: 22px;
-            }
-
-            .ref-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .ref-table {
-                font-size: 12px;
-            }
-
-            .ref-note {
-                font-size: 11px;
-                padding: 10px;
-            }
-
-            .ref-note ul {
-                margin-left: 16px;
-            }
+            body { padding: 12px; }
+            .module { padding: 16px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-grid { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .input-row, .input-row.col4 { grid-template-columns: 1fr; }
+            .arpu-bar { grid-template-columns: repeat(2, 1fr); }
+            .result-grid { grid-template-columns: 1fr; }
+            .wan-arpu-grid { grid-template-columns: 1fr; }
+            .ad-row { grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 8px; padding: 10px 12px; }
+            .ad-row input { font-size: 16px; padding: 10px 12px; }
         }
-
         @media (max-width: 480px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metric-value {
-                font-size: 26px;
-            }
-
-            .module-title {
-                font-size: 14px;
-            }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .region-selector { gap: 6px; }
+            .region-btn { padding: 6px 14px; font-size: 13px; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
 
-    <!-- 模块1：核心指标速览 -->
-    <div class="module">
-        <div class="module-title">📊 核心指标速览</div>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-label">DAU = 老用户 + 新用户</div>
-                <div class="metric-value" id="quick_dau">0</div>
-                <div class="metric-desc"><span id="quick_ret_users">0</span> + <span id="quick_new_users">0</span></div>
+    <div class="header">
+        <h1>IAA 游戏变现与 ROI 算账模型 v2.0</h1>
+        <p>数据源：传音真实运营数据（3月10日安卓全球上架 / 3月18日iOS全球上架）</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">📊 运营看板</button>
+        <button class="tab-btn" onclick="switchTab('calculator')">🧮 预测计算器</button>
+    </div>
+
+    <!-- ==================== TAB 1: Dashboard ==================== -->
+    <div id="tab-dashboard" class="tab-content active">
+
+        <!-- KPI Summary -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">全球累计新增</div>
+                <div class="kpi-value">339,764</div>
+                <div class="kpi-sub">4个主要地区合计</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">DAU单日总流水</div>
-                <div class="metric-value" id="quick_dau_rev">$0</div>
-                <div class="metric-desc">老用户 <span id="quick_ret_rev">$0</span> + 新增 <span id="quick_new_rev_part">$0</span></div>
+            <div class="kpi-card green">
+                <div class="kpi-label">全球总 DAU</div>
+                <div class="kpi-value">64,639</div>
+                <div class="kpi-sub">美国占比 56.3%</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">新增用户单日创收</div>
-                <div class="metric-value" id="quick_new_user_daily_rev">$0</div>
-                <div class="metric-desc">新增日ARPU × 新增数</div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">万ARPU（加权）</div>
+                <div class="kpi-value">$4,437</div>
+                <div class="kpi-sub">每万DAU日流水 · 按DAU加权</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">新增用户LTV总创收</div>
-                <div class="metric-value" id="quick_new_user_rev">$0</div>
-                <div class="metric-desc">单用户LTV × 新增数</div>
+            <div class="kpi-card gold">
+                <div class="kpi-label">💰 全球日流水</div>
+                <div class="kpi-value big" style="color: #b45309;">$28,680</div>
+                <div class="kpi-sub">广告eCPM × 展示反算 · 月约 $86万</div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="module">
+            <div class="module-title">📋 各地区核心指标明细</div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>地区</th>
+                            <th>Tier</th>
+                            <th class="num">新增</th>
+                            <th class="num">DAU</th>
+                            <th class="num">次留</th>
+                            <th class="num">7留</th>
+                            <th class="num">14留</th>
+                            <th class="num">30留</th>
+                            <th class="num">ARPDAU</th>
+                            <th class="num">万ARPU ($)</th>
+                            <th class="num">日总流水</th>
+                            <th class="num">在线时长</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🇺🇸 美国</td>
+                            <td><span class="tag tag-t1">T1</span></td>
+                            <td class="num">178,875</td>
+                            <td class="num highlight">36,378</td>
+                            <td class="num">39.6%</td>
+                            <td class="num">20.8%</td>
+                            <td class="num">15.2%</td>
+                            <td class="num">8.8%</td>
+                            <td class="num">$0.72</td>
+                            <td class="num">$7,232</td>
+                            <td class="num highlight-gold">$26,309</td>
+                            <td class="num">34min</td>
+                        </tr>
+                        <tr>
+                            <td>🇧🇷 巴西</td>
+                            <td><span class="tag tag-t2">T2</span></td>
+                            <td class="num">75,815</td>
+                            <td class="num">12,327</td>
+                            <td class="num">40.1%</td>
+                            <td class="num">16.9%</td>
+                            <td class="num">13.3%</td>
+                            <td class="num">7.1%</td>
+                            <td class="num">$0.16</td>
+                            <td class="num">$1,558</td>
+                            <td class="num highlight-gold">$1,921</td>
+                            <td class="num">31min</td>
+                        </tr>
+                        <tr>
+                            <td>🇲🇾 马来西亚</td>
+                            <td><span class="tag tag-t2">T2</span></td>
+                            <td class="num">4,009</td>
+                            <td class="num">914</td>
+                            <td class="num">39.1%</td>
+                            <td class="num">15.6%</td>
+                            <td class="num">12.3%</td>
+                            <td class="num">—</td>
+                            <td class="num">$0.24</td>
+                            <td class="num">$2,379</td>
+                            <td class="num highlight-gold">$217</td>
+                            <td class="num">29min</td>
+                        </tr>
+                        <tr>
+                            <td>🇵🇰 巴基斯坦</td>
+                            <td><span class="tag tag-t3">T3</span></td>
+                            <td class="num">81,065</td>
+                            <td class="num">15,020</td>
+                            <td class="num">32.2%</td>
+                            <td class="num">12.3%</td>
+                            <td class="num">7.8%</td>
+                            <td class="num">—</td>
+                            <td class="num">$0.02</td>
+                            <td class="num">$155</td>
+                            <td class="num highlight-gold">$233</td>
+                            <td class="num">19min</td>
+                        </tr>
+                        <tr style="background: var(--gray-50); font-weight: 600;">
+                            <td>🌍 全球合计</td>
+                            <td></td>
+                            <td class="num">339,764</td>
+                            <td class="num">64,639</td>
+                            <td class="num" style="color:var(--gray-400);">—</td>
+                            <td class="num" style="color:var(--gray-400);">—</td>
+                            <td class="num" style="color:var(--gray-400);">—</td>
+                            <td class="num" style="color:var(--gray-400);">—</td>
+                            <td class="num">$0.44</td>
+                            <td class="num">$4,437</td>
+                            <td class="num highlight-gold">$28,680</td>
+                            <td class="num" style="color:var(--gray-400);">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Charts Row 1: 万ARPU + 留存 -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>💰 各地区万ARPU ($) — 每万DAU日流水</h3>
+                <div class="chart-container"><canvas id="chart-wan-arpu"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>📈 各地区留存曲线对比</h3>
+                <div class="chart-container"><canvas id="chart-retention"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2: eCPM + DAU -->
+        <div class="chart-grid" style="margin-top: 20px;">
+            <div class="chart-card">
+                <h3>🎯 各地区广告eCPM对比（$）</h3>
+                <div class="chart-container"><canvas id="chart-ecpm"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>👥 DAU 分布 & 日流水贡献</h3>
+                <div class="chart-container"><canvas id="chart-dau-pie"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Charts Row 3: Engagement -->
+        <div class="chart-grid" style="margin-top: 20px;">
+            <div class="chart-card">
+                <h3>🕐 人均在线时长 & 人均广告展示次数</h3>
+                <div class="chart-container"><canvas id="chart-engagement"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>💵 各地区日流水对比</h3>
+                <div class="chart-container"><canvas id="chart-revenue"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Ad Revenue Structure -->
+        <div class="module" style="margin-top: 20px;">
+            <div class="module-title">💡 广告收入结构分析</div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>地区</th>
+                            <th class="num">Banner 人均展示</th>
+                            <th class="num">Banner eCPM</th>
+                            <th class="num">插屏 人均展示</th>
+                            <th class="num">插屏 eCPM</th>
+                            <th class="num">激励 人均展示</th>
+                            <th class="num">激励 eCPM</th>
+                            <th class="num">日人均总展示</th>
+                            <th class="num">日流水</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🇺🇸 美国</td>
+                            <td class="num">71.78</td>
+                            <td class="num">$0.45</td>
+                            <td class="num">5.39</td>
+                            <td class="num highlight">$113.97</td>
+                            <td class="num">0.29</td>
+                            <td class="num highlight">$264.20</td>
+                            <td class="num">77.46</td>
+                            <td class="num highlight-gold">$26,309</td>
+                        </tr>
+                        <tr>
+                            <td>🇧🇷 巴西</td>
+                            <td class="num">38.65</td>
+                            <td class="num">$0.25</td>
+                            <td class="num">4.85</td>
+                            <td class="num">$27.67</td>
+                            <td class="num">0.22</td>
+                            <td class="num">$54.28</td>
+                            <td class="num">43.72</td>
+                            <td class="num highlight-gold">$1,921</td>
+                        </tr>
+                        <tr>
+                            <td>🇲🇾 马来西亚</td>
+                            <td class="num">39.55</td>
+                            <td class="num">$0.18</td>
+                            <td class="num">6.25</td>
+                            <td class="num">$32.48</td>
+                            <td class="num">0.21</td>
+                            <td class="num">$132.02</td>
+                            <td class="num">46.01</td>
+                            <td class="num highlight-gold">$217</td>
+                        </tr>
+                        <tr>
+                            <td>🇵🇰 巴基斯坦</td>
+                            <td class="num">10.01</td>
+                            <td class="num">$0.15</td>
+                            <td class="num">1.74</td>
+                            <td class="num">$7.08</td>
+                            <td class="num">0.17</td>
+                            <td class="num">$9.93</td>
+                            <td class="num">11.92</td>
+                            <td class="num highlight-gold">$233</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- 模块2：基础业务与留存参数 -->
-    <div class="module">
-        <div class="module-title">⚙️ 1. 基础业务与留存参数</div>
-        
-        <div class="input-row">
-            <div class="input-group">
-                <label>老用户 DAU</label>
-                <input type="number" id="retDau" value="40000" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>每日新增人数</label>
-                <input type="number" id="newUsers" value="10000" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>买量单价 CPA ($)</label>
-                <input type="number" id="cpa" value="0.80" step="0.05" oninput="calculate()">
-            </div>
-        </div>
+    <!-- ==================== TAB 2: Calculator ==================== -->
+    <div id="tab-calculator" class="tab-content">
 
-        <div class="input-row" style="grid-template-columns: repeat(2, 1fr);">
-            <div class="input-group">
-                <label>次日留存 (%)</label>
-                <input type="number" id="ret_d1" value="45" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>7日留存 (%)</label>
-                <input type="number" id="ret_d7" value="20" oninput="calculate()">
-            </div>
-        </div>
-        <input type="hidden" id="ret_d3" value="30">
-
-        <div class="lt-box">
-            <div class="lt-label">经留存曲线拟合，预估平均生命周期 (LT)</div>
-            <div class="lt-value" id="disp_lt">0.00 天</div>
-        </div>
-    </div>
-
-    <!-- 模块3：广告参数设置 -->
-    <div class="module">
-        <div class="module-title">📈 2. 广告参数设置（以新增用户 D0 表现为基准）</div>
-
-        <!-- 广告参数表格 -->
-        <div style="border: 1px solid var(--gray-200); border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
-            <!-- 表头 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; background: var(--gray-50); border-bottom: 2px solid var(--gray-200); font-weight: 600; font-size: 13px; color: var(--gray-600);">
-                <div>广告类型</div>
-                <div>eCPM ($)</div>
-                <div>人均展示/天</div>
-                <div>日ARPU</div>
-            </div>
-
-            <!-- 激励视频 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--gray-100); align-items: center; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
-                <div><strong>激励视频</strong></div>
-                <div><input type="number" id="rv_ecpm" value="22" step="0.5" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div><input type="number" id="rv_aipu" value="5" step="0.1" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div id="rv_arpu" style="font-weight: 600; color: var(--success); font-size: 15px;">$0.00</div>
-            </div>
-
-            <!-- 插屏广告 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--gray-100); align-items: center; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
-                <div><strong>插屏广告</strong></div>
-                <div><input type="number" id="int_ecpm" value="8" step="0.5" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div><input type="number" id="int_aipu" value="2" step="0.1" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div id="int_arpu" style="font-weight: 600; color: var(--success); font-size: 15px;">$0.00</div>
-            </div>
-
-            <!-- 开屏广告 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--gray-100); align-items: center; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
-                <div><strong>开屏广告</strong></div>
-                <div><input type="number" id="open_ecpm" value="6" step="0.5" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div><input type="number" id="open_aipu" value="1" step="0.1" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div id="open_arpu" style="font-weight: 600; color: var(--success); font-size: 15px;">$0.00</div>
-            </div>
-
-            <!-- 横幅广告 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--gray-100); align-items: center; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background='transparent'">
-                <div><strong>横幅广告</strong></div>
-                <div><input type="number" id="ban_ecpm" value="0.8" step="0.1" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div><input type="number" id="ban_aipu" value="10" step="1" oninput="calculate()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px;"></div>
-                <div id="ban_arpu" style="font-weight: 600; color: var(--success); font-size: 15px;">$0.00</div>
-            </div>
-
-            <!-- 合计行 -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 12px 16px; background: var(--gray-50); align-items: center;">
-                <div style="font-weight: 600;">合计</div>
-                <div colspan="2" style="color: var(--gray-400); font-size: 11px; grid-column: span 2;">日ARPU = eCPM × 展示次数 / 1000</div>
-                <div id="total_arpu" style="font-weight: 700; color: var(--primary); font-size: 16px;">$0.00</div>
-            </div>
-        </div>
-
-        <div class="decay-row">
-            <div class="decay-label">💡 老用户的广告意愿和竞价通常会下降，设置衰减杠杆以推算留存ARPU：</div>
-            <div class="decay-input">
-                <span>eCPM降至</span>
-                <input type="number" id="ecpm_decay" value="70" oninput="calculate()">
-                <span>%</span>
-                <span style="margin-left: 16px;">频次降至</span>
-                <input type="number" id="aipu_decay" value="80" oninput="calculate()">
-                <span>%</span>
-            </div>
-        </div>
-
-        <div class="arpu-bar">
-            <div class="arpu-item">
-                <div class="arpu-label">新增日 ARPU (D0)</div>
-                <div class="arpu-value" id="disp_new_arpu">$0.00</div>
-            </div>
-            <div class="arpu-item">
-                <div class="arpu-label">留存日 ARPU (D1+)</div>
-                <div class="arpu-value" id="disp_ret_arpu">$0.00</div>
-            </div>
-            <div class="arpu-item">
-                <div class="arpu-label">大盘综合日 ARPU</div>
-                <div class="arpu-value" id="disp_avg_arpu">$0.00</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 模块4：商业化财务结算 -->
-    <div class="module">
-        <div class="module-title">💰 3. 商业化财务结算</div>
-
-        <div class="result-grid">
-            <div class="result-card">
-                <div class="result-label">大盘单日广告总流水</div>
-                <div class="result-value" id="dailyRev" style="color: var(--primary)">$0</div>
-                <div class="result-formula">老用户DAU × 留存日ARPU + 新增用户 × 新增日ARPU</div>
-            </div>
-
-            <div class="result-card success">
-                <div class="result-label">单用户全生命周期价值 (LTV)</div>
-                <div class="result-value" id="singleLtv" style="color: var(--success)">$0</div>
-                <div class="result-formula">新增日ARPU + (LT-1) × 留存日ARPU</div>
-            </div>
-
-            <div class="result-card roi" id="roi-box">
-                <div class="result-label">买量 ROI (回本率)</div>
-                <div class="result-value" id="roi" style="color: var(--gray-800)">0%</div>
-                <div class="roi-details">
-                    <span>创收: <strong id="disp_total_rev">$0</strong></span>
-                    <span>成本: <strong id="disp_total_cost">$0</strong></span>
+        <!-- Quick Overview -->
+        <div class="module">
+            <div class="module-title">📊 核心指标速览</div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">DAU = 老用户 + 新用户</div>
+                    <div class="metric-value" id="quick_dau">0</div>
+                    <div class="metric-desc"><span id="quick_ret_users">0</span> + <span id="quick_new_users">0</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">DAU单日总流水</div>
+                    <div class="metric-value" id="quick_dau_rev">$0</div>
+                    <div class="metric-desc">老用户 <span id="quick_ret_rev">$0</span> + 新增 <span id="quick_new_rev_part">$0</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">新增用户单日创收</div>
+                    <div class="metric-value" id="quick_new_user_daily_rev">$0</div>
+                    <div class="metric-desc">新增日ARPU × 新增数</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">新增用户LTV总创收</div>
+                    <div class="metric-value" id="quick_new_user_rev">$0</div>
+                    <div class="metric-desc">单用户LTV × 新增数</div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 模块5：行业参考数据 -->
-    <div class="module">
-        <div class="module-title">📊 4. 行业参考数据（2025年）</div>
+        <!-- Region Selector + Inputs -->
+        <div class="module">
+            <div class="module-title">⚙️ 1. 地区选择与基础参数</div>
 
-        <p style="font-size: 13px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6;">
-            <strong>📌 数据来源说明：</strong>以下数据来自<strong>Tenjin、Business of Apps、Playwire、AdMob官方基准工具</strong>等公开报告（2025年最新数据），实际数值因游戏类型、用户质量、季节因素等影响会有差异，请以实际运营数据为准。
-        </p>
-
-        <div class="ref-grid">
-            <div>
-                <div class="ref-table-title">💰 激励视频 eCPM（美元）</div>
-                <table class="ref-table">
-                    <thead>
-                        <tr>
-                            <th>地区</th>
-                            <th style="text-align: right;">范围</th>
-                            <th>中位数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>🇺🇸 美国</td><td>$15-40</td><td>$25</td></tr>
-                        <tr><td>🇯🇵 日本</td><td>$20-50</td><td>$35</td></tr>
-                        <tr><td>🇬🇧 英国</td><td>$12-28</td><td>$18</td></tr>
-                        <tr><td>🇰🇷 韩国</td><td>$10-25</td><td>$15</td></tr>
-                        <tr><td>🇩🇪 德国</td><td>$10-22</td><td>$15</td></tr>
-                        <tr><td>🇧🇷 巴西</td><td>$2-8</td><td>$4</td></tr>
-                        <tr><td>🇮🇩 印尼</td><td>$1-5</td><td>$3</td></tr>
-                        <tr><td>🇮🇳 印度</td><td>$0.5-3</td><td>$1.5</td></tr>
-                    </tbody>
-                </table>
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 8px;">选择地区预设（自动填入真实运营数据，可手动修改做 What-if 预测）</label>
+                <div class="region-selector">
+                    <button class="region-btn" onclick="selectRegion('global')">🌍 全球大盘</button>
+                    <button class="region-btn active" onclick="selectRegion('us')">🇺🇸 美国</button>
+                    <button class="region-btn" onclick="selectRegion('br')">🇧🇷 巴西</button>
+                    <button class="region-btn" onclick="selectRegion('my')">🇲🇾 马来西亚</button>
+                    <button class="region-btn" onclick="selectRegion('pk')">🇵🇰 巴基斯坦</button>
+                    <button class="region-btn" onclick="selectRegion('custom')">✏️ 自定义</button>
+                </div>
             </div>
 
-            <div>
-                <div class="ref-table-title" style="border-bottom-color: var(--success);">💵 插屏广告 eCPM（美元）</div>
-                <table class="ref-table">
-                    <thead>
-                        <tr>
-                            <th>地区</th>
-                            <th style="text-align: right;">范围</th>
-                            <th>中位数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>🇺🇸 美国</td><td>$5-8</td><td>$6.5</td></tr>
-                        <tr><td>🇯🇵 日本</td><td>$6-12</td><td>$8</td></tr>
-                        <tr><td>🇬🇧 英国</td><td>$4-7</td><td>$5.5</td></tr>
-                        <tr><td>🇰🇷 韩国</td><td>$3-6</td><td>$4.5</td></tr>
-                        <tr><td>🇩🇪 德国</td><td>$3-6</td><td>$4.5</td></tr>
-                        <tr><td>🇧🇷 巴西</td><td>$0.5-2</td><td>$1.2</td></tr>
-                        <tr><td>🇮🇩 印尼</td><td>$0.3-1.5</td><td>$0.8</td></tr>
-                        <tr><td>🇮🇳 印度</td><td>$0.2-1</td><td>$0.5</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="ref-grid" style="margin-top: 24px;">
-            <div>
-                <div class="ref-table-title" style="border-bottom-color: var(--warning);">📊 横幅广告 eCPM（美元）</div>
-                <table class="ref-table">
-                    <thead>
-                        <tr>
-                            <th>地区</th>
-                            <th style="text-align: right;">范围</th>
-                            <th>中位数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>🇺🇸 美国</td><td>$0.5-1.5</td><td>$1.0</td></tr>
-                        <tr><td>🇯🇵 日本</td><td>$0.6-1.5</td><td>$1.0</td></tr>
-                        <tr><td>🇬🇧 英国</td><td>$0.4-1.2</td><td>$0.8</td></tr>
-                        <tr><td>🇰🇷 韩国</td><td>$0.3-0.9</td><td>$0.6</td></tr>
-                        <tr><td>🇩🇪 德国</td><td>$0.3-0.9</td><td>$0.6</td></tr>
-                        <tr><td>🇧🇷 巴西</td><td>$0.1-0.4</td><td>$0.2</td></tr>
-                        <tr><td>🇮🇩 印尼</td><td>$0.05-0.3</td><td>$0.15</td></tr>
-                        <tr><td>🇮🇳 印度</td><td>$0.03-0.2</td><td>$0.1</td></tr>
-                    </tbody>
-                </table>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>老用户 DAU（看板实际值）</label>
+                    <input type="number" id="retDau" value="36378" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>每日新增人数（看板实际值）</label>
+                    <input type="number" id="newUsers" value="178875" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>买量单价 CPA ($)</label>
+                    <input type="number" id="cpa" value="2.50" step="0.05" oninput="calculate()">
+                </div>
             </div>
 
-            <div>
-                <div class="ref-table-title" style="border-bottom-color: #8b5cf6;">💵 买量 CPA（美元）</div>
-                <table class="ref-table">
-                    <thead>
-                        <tr>
-                            <th>地区</th>
-                            <th style="text-align: right;">范围</th>
-                            <th>中位数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>🇺🇸 美国</td><td>$1.5-5.0</td><td>$2.5</td></tr>
-                        <tr><td>🇯🇵 日本</td><td>$2.0-6.0</td><td>$3.5</td></tr>
-                        <tr><td>🇬🇧 英国</td><td>$1.0-3.5</td><td>$2.0</td></tr>
-                        <tr><td>🇰🇷 韩国</td><td>$1.0-3.0</td><td>$1.8</td></tr>
-                        <tr><td>🇩🇪 德国</td><td>$1.0-3.0</td><td>$1.8</td></tr>
-                        <tr><td>🇧🇷 巴西</td><td>$0.10-0.50</td><td>$0.25</td></tr>
-                        <tr><td>🇮🇩 印尼</td><td>$0.05-0.30</td><td>$0.15</td></tr>
-                        <tr><td>🇮🇳 印度</td><td>$0.03-0.15</td><td>$0.08</td></tr>
-                    </tbody>
-                </table>
+            <div class="input-row col4">
+                <div class="input-group">
+                    <label>次日留存 (%)</label>
+                    <input type="number" id="ret_d1" value="39.64" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>7日留存 (%)</label>
+                    <input type="number" id="ret_d7" value="20.79" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>14日留存 (%)</label>
+                    <input type="number" id="ret_d14" value="15.21" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>30日留存 (%)</label>
+                    <input type="number" id="ret_d30" value="8.75" step="0.1" oninput="calculate()">
+                </div>
+            </div>
+
+            <div class="lt-box">
+                <div class="lt-label">经留存曲线拟合（幂律模型），预估平均生命周期 (LT)</div>
+                <div class="lt-value" id="disp_lt">0.00 天</div>
             </div>
         </div>
 
-        <div class="ref-note">
-            <strong>📚 数据来源：</strong>
-            <ul>
-                <li><strong>Tenjin《Ad Monetization in Mobile Games Benchmark Report 2025》</strong> - 基于1,460亿次广告展示数据</li>
-                <li><strong>Business of Apps《Mobile Advertising Rates 2025》</strong> - 全球移动广告基准报告</li>
-                <li><strong>Playwire《AdMob eCPM Benchmarks 2025》</strong> - 按游戏/非游戏分类的eCPM基准</li>
-                <li><strong>Bidlogic《Q4 2025 Mobile App eCPM Report》</strong> - 2025年Q4移动应用eCPM趋势</li>
-                <li><strong>AdMob官方eCPM Trends工具</strong> - Google 2025年2月推出的基准工具</li>
-            </ul>
+        <!-- Ad Params -->
+        <div class="module">
+            <div class="module-title">📈 2. 广告参数设置（以新增用户 D0 表现为基准）</div>
+
+            <div class="ad-table-wrap">
+                <div class="ad-row header">
+                    <div>广告类型</div>
+                    <div>eCPM ($)</div>
+                    <div>人均展示/天</div>
+                    <div>日ARPU</div>
+                </div>
+                <div class="ad-row">
+                    <div><strong>Banner 横幅</strong></div>
+                    <div><input type="number" id="ban_ecpm" value="0.45" step="0.01" oninput="calculate()"></div>
+                    <div><input type="number" id="ban_aipu" value="71.78" step="0.1" oninput="calculate()"></div>
+                    <div class="arpu-val" id="ban_arpu">$0.00</div>
+                </div>
+                <div class="ad-row">
+                    <div><strong>插屏广告</strong></div>
+                    <div><input type="number" id="int_ecpm" value="113.97" step="0.5" oninput="calculate()"></div>
+                    <div><input type="number" id="int_aipu" value="5.39" step="0.1" oninput="calculate()"></div>
+                    <div class="arpu-val" id="int_arpu">$0.00</div>
+                </div>
+                <div class="ad-row">
+                    <div><strong>激励视频</strong></div>
+                    <div><input type="number" id="rv_ecpm" value="264.20" step="0.5" oninput="calculate()"></div>
+                    <div><input type="number" id="rv_aipu" value="0.29" step="0.01" oninput="calculate()"></div>
+                    <div class="arpu-val" id="rv_arpu">$0.00</div>
+                </div>
+                <div class="ad-row footer">
+                    <div style="font-weight: 600;">合计</div>
+                    <div style="color: var(--gray-400); font-size: 11px; grid-column: span 2;">日ARPU = eCPM × 展示次数 / 1000</div>
+                    <div id="total_arpu" style="font-weight: 700; color: var(--primary); font-size: 16px;">$0.00</div>
+                </div>
+            </div>
+
+            <div class="decay-row">
+                <div class="decay-label">💡 老用户广告衰减杠杆（eCPM和频次通常会下降）：</div>
+                <div class="decay-input">
+                    <span>eCPM降至</span>
+                    <input type="number" id="ecpm_decay" value="70" oninput="calculate()">
+                    <span>%</span>
+                    <span style="margin-left: 16px;">频次降至</span>
+                    <input type="number" id="aipu_decay" value="80" oninput="calculate()">
+                    <span>%</span>
+                </div>
+            </div>
+
+            <div class="arpu-bar">
+                <div class="arpu-item">
+                    <div class="arpu-label">新增日 ARPU (D0)</div>
+                    <div class="arpu-value" id="disp_new_arpu">$0.00</div>
+                </div>
+                <div class="arpu-item">
+                    <div class="arpu-label">留存日 ARPU (D1+)</div>
+                    <div class="arpu-value" id="disp_ret_arpu">$0.00</div>
+                </div>
+                <div class="arpu-item">
+                    <div class="arpu-label">大盘综合日 ARPU</div>
+                    <div class="arpu-value" id="disp_avg_arpu">$0.00</div>
+                </div>
+                <div class="arpu-item">
+                    <div class="arpu-label">人均日广告展示</div>
+                    <div class="arpu-value" id="disp_total_impressions">0</div>
+                </div>
+            </div>
         </div>
 
-        <div class="ref-note" style="background: var(--primary-light); border: 1px solid #bfdbfe; margin-top: 16px;">
-            <strong>💡 关键洞察：</strong>
-            <ul>
-                <li><strong>激励视频eCPM最高</strong>：用户主动观看，广告主愿意支付溢价（$15-40/Tier1国家）</li>
-                <li><strong>iOS vs Android</strong>：iOS平台eCPM普遍比Android高20-40%，但受ATT政策影响收入占比下降</li>
-                <li><strong>季节性波动</strong>：Q4假期季eCPM最高，1月最低，波动幅度可达30-50%</li>
-                <li><strong>Tier1国家</strong>：美日英德韩收益高但买量成本也高，需重点监控ROI</li>
-                <li><strong>Tier3国家</strong>：东南亚、拉美、印度成本低但收益也低，适合规模化用户</li>
-            </ul>
+        <!-- Financial Results -->
+        <div class="module">
+            <div class="module-title">💰 3. 商业化财务结算</div>
+
+            <div class="wan-arpu-grid" style="margin-bottom: 20px;">
+                <div class="wan-arpu-card">
+                    <div class="wan-arpu-title">每万新增用户日创收</div>
+                    <div class="wan-arpu-num" id="wan_arpu_new">$0</div>
+                    <div class="wan-arpu-sub">万新增 × 新增日ARPU</div>
+                </div>
+                <div class="wan-arpu-card green">
+                    <div class="wan-arpu-title">每万DAU日创收（万ARPU）</div>
+                    <div class="wan-arpu-num" id="wan_arpu_dau">$0</div>
+                    <div class="wan-arpu-sub">ARPDAU × 10,000</div>
+                </div>
+            </div>
+
+            <div class="result-grid">
+                <div class="result-card">
+                    <div class="result-label">大盘单日广告总流水</div>
+                    <div class="result-value" id="dailyRev" style="color: var(--primary)">$0</div>
+                    <div class="result-formula">老用户DAU × 留存日ARPU + 新增 × 新增日ARPU</div>
+                </div>
+                <div class="result-card success">
+                    <div class="result-label">单用户全生命周期价值 (LTV)</div>
+                    <div class="result-value" id="singleLtv" style="color: var(--success)">$0</div>
+                    <div class="result-formula">D0 ARPU + (LT-1) × 留存日ARPU</div>
+                </div>
+                <div class="result-card roi" id="roi-box">
+                    <div class="result-label">买量 ROI (回本率)</div>
+                    <div class="result-value" id="roi" style="color: var(--gray-800)">0%</div>
+                    <div class="roi-details">
+                        <span>LTV创收: <strong id="disp_total_rev">$0</strong></span>
+                        <span>买量成本: <strong id="disp_total_cost">$0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-grid">
+                <div class="result-card">
+                    <div class="result-label">月预估流水（×30天）</div>
+                    <div class="result-value" id="monthlyRev" style="color: var(--primary)">$0</div>
+                    <div class="result-formula">日流水 × 30</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">月买量预算</div>
+                    <div class="result-value" id="monthlyCost" style="color: var(--warning)">$0</div>
+                    <div class="result-formula">新增 × CPA × 30</div>
+                </div>
+                <div class="result-card" id="profit-box">
+                    <div class="result-label">月预估利润（流水 - 买量）</div>
+                    <div class="result-value" id="monthlyProfit" style="color: var(--success)">$0</div>
+                    <div class="result-formula">月流水 - 月买量预算</div>
+                </div>
+            </div>
         </div>
     </div>
 
 </div>
 
 <script>
-    function formatMoney(num, digits=2) {
-        return '$' + num.toLocaleString('en-US', {
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits
+// ==================== Real Data ====================
+const REGION_DATA = {
+    us: {
+        name: '🇺🇸 美国', retDau: 36378, newUsers: 178875, cpa: 2.50,
+        ret_d1: 39.64, ret_d7: 20.79, ret_d14: 15.21, ret_d30: 8.75,
+        ban_ecpm: 0.45, ban_aipu: 71.78,
+        int_ecpm: 113.97, int_aipu: 5.39,
+        rv_ecpm: 264.20, rv_aipu: 0.29,
+        wanArpu: 7232, dailyRevenue: 26309,
+    },
+    br: {
+        name: '🇧🇷 巴西', retDau: 12327, newUsers: 75815, cpa: 0.25,
+        ret_d1: 40.13, ret_d7: 16.91, ret_d14: 13.34, ret_d30: 7.13,
+        ban_ecpm: 0.25, ban_aipu: 38.65,
+        int_ecpm: 27.67, int_aipu: 4.85,
+        rv_ecpm: 54.28, rv_aipu: 0.22,
+        wanArpu: 1558, dailyRevenue: 1921,
+    },
+    my: {
+        name: '🇲🇾 马来西亚', retDau: 914, newUsers: 4009, cpa: 0.50,
+        ret_d1: 39.13, ret_d7: 15.57, ret_d14: 12.32, ret_d30: 0,
+        ban_ecpm: 0.18, ban_aipu: 39.55,
+        int_ecpm: 32.48, int_aipu: 6.25,
+        rv_ecpm: 132.02, rv_aipu: 0.21,
+        wanArpu: 2379, dailyRevenue: 217,
+    },
+    pk: {
+        name: '🇵🇰 巴基斯坦', retDau: 15020, newUsers: 81065, cpa: 0.08,
+        ret_d1: 32.17, ret_d7: 12.34, ret_d14: 7.83, ret_d30: 0,
+        ban_ecpm: 0.15, ban_aipu: 10.01,
+        int_ecpm: 7.08, int_aipu: 1.74,
+        rv_ecpm: 9.93, rv_aipu: 0.17,
+        wanArpu: 155, dailyRevenue: 233,
+    },
+};
+
+// Global weighted average
+function calcGlobal() {
+    const regions = Object.values(REGION_DATA);
+    const totalDau = regions.reduce((s, r) => s + r.retDau, 0);
+    const totalNew = regions.reduce((s, r) => s + r.newUsers, 0);
+    const totalRev = regions.reduce((s, r) => s + r.dailyRevenue, 0);
+    const w = (field) => regions.reduce((s, r) => s + r.retDau * r[field], 0) / totalDau;
+    return {
+        name: '🌍 全球大盘', retDau: totalDau, newUsers: totalNew, cpa: 1.00,
+        ret_d1: w('ret_d1'), ret_d7: w('ret_d7'), ret_d14: w('ret_d14'), ret_d30: w('ret_d30'),
+        ban_ecpm: w('ban_ecpm'), ban_aipu: w('ban_aipu'),
+        int_ecpm: w('int_ecpm'), int_aipu: w('int_aipu'),
+        rv_ecpm: w('rv_ecpm'), rv_aipu: w('rv_aipu'),
+        wanArpu: Math.round(totalRev / totalDau * 10000),
+        dailyRevenue: totalRev,
+    };
+}
+REGION_DATA.global = calcGlobal();
+
+let currentRegion = 'us';
+
+// ==================== Tab Switch ====================
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    if (tab === 'dashboard') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-dashboard').classList.add('active');
+    } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-calculator').classList.add('active');
+    }
+}
+
+// ==================== Region Selection ====================
+function selectRegion(region) {
+    currentRegion = region;
+    document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    if (region === 'custom') return;
+
+    const data = REGION_DATA[region];
+    if (!data) return;
+
+    const fields = ['retDau', 'newUsers', 'cpa', 'ret_d1', 'ret_d7', 'ret_d14', 'ret_d30',
+                     'ban_ecpm', 'ban_aipu', 'int_ecpm', 'int_aipu', 'rv_ecpm', 'rv_aipu'];
+    fields.forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.value = data[f];
+    });
+    calculate();
+}
+
+// ==================== Calculator ====================
+function formatMoney(num, digits = 2) {
+    return '$' + num.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+function calculate() {
+    const retDau = parseFloat(document.getElementById('retDau').value) || 0;
+    const newUsers = parseFloat(document.getElementById('newUsers').value) || 0;
+    const cpa = parseFloat(document.getElementById('cpa').value) || 0;
+    const d1 = parseFloat(document.getElementById('ret_d1').value) || 0;
+    const d7 = parseFloat(document.getElementById('ret_d7').value) || 0;
+    const d14 = parseFloat(document.getElementById('ret_d14').value) || 0;
+    const d30 = parseFloat(document.getElementById('ret_d30').value) || 0;
+    const dau = retDau + newUsers;
+
+    // LT: power law fit
+    let lt = 1;
+    const r1 = d1 / 100, r7 = d7 / 100, r14 = d14 / 100, r30 = d30 / 100;
+    if (r1 > 0 && r7 > 0 && r1 > r7) {
+        const points = [[1, r1], [7, r7]];
+        if (r14 > 0) points.push([14, r14]);
+        if (r30 > 0) points.push([30, r30]);
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        points.forEach(([t, r]) => {
+            const lx = Math.log(t), ly = Math.log(r);
+            sumX += lx; sumY += ly; sumXY += lx * ly; sumX2 += lx * lx;
         });
+        const n = points.length;
+        const b = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const a = Math.exp((sumY - b * sumX) / n);
+        for (let t = 1; t <= 120; t++) lt += a * Math.pow(t, b);
+    }
+    document.getElementById('disp_lt').innerText = lt.toFixed(2) + ' 天';
+
+    // Ad ARPU
+    const adTypes = ['ban', 'int', 'rv'];
+    let newArpu = 0, retArpu = 0, totalImpressions = 0;
+    const ecpmDecay = (parseFloat(document.getElementById('ecpm_decay').value) || 100) / 100;
+    const aipuDecay = (parseFloat(document.getElementById('aipu_decay').value) || 100) / 100;
+
+    adTypes.forEach(key => {
+        const aipu = parseFloat(document.getElementById(`${key}_aipu`).value) || 0;
+        const ecpm = parseFloat(document.getElementById(`${key}_ecpm`).value) || 0;
+        const arpu = (ecpm / 1000) * aipu;
+        document.getElementById(`${key}_arpu`).innerText = formatMoney(arpu, 2);
+        newArpu += arpu;
+        retArpu += (ecpm * ecpmDecay / 1000) * (aipu * aipuDecay);
+        totalImpressions += aipu;
+    });
+
+    document.getElementById('total_arpu').innerText = formatMoney(newArpu);
+    const avgArpu = dau > 0 ? ((newArpu * newUsers) + (retArpu * retDau)) / dau : 0;
+    document.getElementById('disp_new_arpu').innerText = formatMoney(newArpu);
+    document.getElementById('disp_ret_arpu').innerText = formatMoney(retArpu);
+    document.getElementById('disp_avg_arpu').innerText = formatMoney(avgArpu);
+    document.getElementById('disp_total_impressions').innerText = totalImpressions.toFixed(1);
+
+    // Financial
+    const retRevDaily = retDau * retArpu;
+    const newRevDaily = newUsers * newArpu;
+    const dailyRev = retRevDaily + newRevDaily;
+    const singleLtv = newArpu + (Math.max(0, lt - 1) * retArpu);
+    const totalRev = newUsers * singleLtv;
+    const totalCost = newUsers * cpa;
+    const roi = totalCost > 0 ? (totalRev / totalCost) * 100 : 0;
+
+    document.getElementById('dailyRev').innerText = formatMoney(dailyRev);
+    document.getElementById('singleLtv').innerText = formatMoney(singleLtv);
+    document.getElementById('disp_total_rev').innerText = formatMoney(totalRev);
+    document.getElementById('disp_total_cost').innerText = formatMoney(totalCost);
+
+    const monthlyRev = dailyRev * 30;
+    const monthlyCost = newUsers * cpa * 30;
+    const monthlyProfit = monthlyRev - monthlyCost;
+    document.getElementById('monthlyRev').innerText = formatMoney(monthlyRev, 0);
+    document.getElementById('monthlyCost').innerText = formatMoney(monthlyCost, 0);
+    document.getElementById('monthlyProfit').innerText = formatMoney(monthlyProfit, 0);
+
+    const profitBox = document.getElementById('profit-box');
+    if (monthlyProfit >= 0) {
+        document.getElementById('monthlyProfit').style.color = 'var(--success)';
+        profitBox.style.borderLeftColor = 'var(--success)';
+    } else {
+        document.getElementById('monthlyProfit').style.color = 'var(--danger)';
+        profitBox.style.borderLeftColor = 'var(--danger)';
     }
 
-    function calculate() {
-        // 获取参数
-        const retDau = parseFloat(document.getElementById('retDau').value) || 0;
-        const newUsers = parseFloat(document.getElementById('newUsers').value) || 0;
-        const cpa = parseFloat(document.getElementById('cpa').value) || 0;
-        const d1 = parseFloat(document.getElementById('ret_d1').value) || 0;
-        const d7 = parseFloat(document.getElementById('ret_d7').value) || 0;
-        
-        // DAU = 老用户 + 新用户
-        const dau = retDau + newUsers;
+    const roiEl = document.getElementById('roi');
+    const roiBox = document.getElementById('roi-box');
+    roiEl.innerText = roi.toFixed(1) + '%';
+    if (roi >= 100) {
+        roiEl.style.color = 'var(--success)';
+        roiBox.style.borderLeftColor = 'var(--success)';
+    } else {
+        roiEl.style.color = 'var(--danger)';
+        roiBox.style.borderLeftColor = 'var(--danger)';
+    }
 
-        // 计算LT
-        let lt = 1;
-        if (d1 > 0 && d7 > 0 && d1 > d7) {
-            const r1 = d1 / 100;
-            const r7 = d7 / 100;
-            const b = Math.log(r7 / r1) / Math.log(7);
-            for (let t = 1; t <= 120; t++) {
-                lt += r1 * Math.pow(t, b);
+    const wanArpuNew = newArpu * 10000;
+    const wanArpuDau = avgArpu * 10000;
+    document.getElementById('wan_arpu_new').innerText = formatMoney(wanArpuNew, 0);
+    document.getElementById('wan_arpu_dau').innerText = formatMoney(wanArpuDau, 0);
+
+    document.getElementById('quick_dau').innerText = dau.toLocaleString();
+    document.getElementById('quick_ret_users').innerText = '老用户 ' + retDau.toLocaleString();
+    document.getElementById('quick_new_users').innerText = '新增 ' + newUsers.toLocaleString();
+    document.getElementById('quick_dau_rev').innerText = formatMoney(dailyRev);
+    document.getElementById('quick_ret_rev').innerText = formatMoney(retRevDaily);
+    document.getElementById('quick_new_rev_part').innerText = formatMoney(newRevDaily);
+    document.getElementById('quick_new_user_daily_rev').innerText = formatMoney(newRevDaily);
+    document.getElementById('quick_new_user_rev').innerText = formatMoney(singleLtv * newUsers);
+}
+
+// ==================== Charts ====================
+const COLORS = { us: '#2563eb', br: '#16a34a', my: '#d97706', pk: '#dc2626' };
+const LABELS = ['🇺🇸 美国', '🇧🇷 巴西', '🇲🇾 马来西亚', '🇵🇰 巴基斯坦'];
+const KEYS = ['us', 'br', 'my', 'pk'];
+
+function initCharts() {
+    // 万ARPU Bar
+    new Chart(document.getElementById('chart-wan-arpu'), {
+        type: 'bar',
+        data: {
+            labels: LABELS,
+            datasets: [{
+                label: '万ARPU ($)',
+                data: [7232, 1558, 2379, 155],
+                backgroundColor: ['#667eea99', '#11998e99', '#f7971e99', '#e7494999'],
+                borderColor: ['#667eea', '#11998e', '#f7971e', '#e74949'],
+                borderWidth: 2, borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => '$' + ctx.raw.toLocaleString() } }
+            },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + (v / 1000) + 'K' } } }
+        }
+    });
+
+    // Retention
+    new Chart(document.getElementById('chart-retention'), {
+        type: 'line',
+        data: {
+            labels: ['D1', 'D7', 'D14', 'D30'],
+            datasets: KEYS.map((k, i) => ({
+                label: LABELS[i],
+                data: [REGION_DATA[k].ret_d1, REGION_DATA[k].ret_d7, REGION_DATA[k].ret_d14 || null, REGION_DATA[k].ret_d30 || null],
+                borderColor: COLORS[k], backgroundColor: COLORS[k] + '22',
+                borderWidth: 2.5, tension: 0.3, pointRadius: 5, pointHoverRadius: 7, spanGaps: false,
+            }))
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw ? ctx.raw.toFixed(1) + '%' : 'N/A') } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%' } } }
+        }
+    });
+
+    // eCPM
+    new Chart(document.getElementById('chart-ecpm'), {
+        type: 'bar',
+        data: {
+            labels: LABELS,
+            datasets: [
+                { label: 'Banner eCPM', data: [0.45, 0.25, 0.18, 0.15], backgroundColor: '#94a3b899', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 4 },
+                { label: '插屏 eCPM', data: [113.97, 27.67, 32.48, 7.08], backgroundColor: '#d9770699', borderColor: '#d97706', borderWidth: 1, borderRadius: 4 },
+                { label: '激励 eCPM', data: [264.20, 54.28, 132.02, 9.93], backgroundColor: '#2563eb99', borderColor: '#2563eb', borderWidth: 1, borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.raw.toFixed(2) } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } }
+        }
+    });
+
+    // DAU Pie
+    new Chart(document.getElementById('chart-dau-pie'), {
+        type: 'doughnut',
+        data: {
+            labels: LABELS,
+            datasets: [{
+                data: [36378, 12327, 914, 15020],
+                backgroundColor: KEYS.map(k => COLORS[k] + 'cc'), borderColor: '#fff', borderWidth: 3,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return ctx.label + ': ' + ctx.raw.toLocaleString() + ' (' + ((ctx.raw / total) * 100).toFixed(1) + '%)';
+                        }
+                    }
+                }
             }
         }
-        document.getElementById('disp_lt').innerText = lt.toFixed(2) + ' 天';
+    });
 
-        // 广告ARPU计算
-        const adTypes = ['rv', 'int', 'open', 'ban'];
-        let newArpu = 0;
-        let retArpu = 0;
-
-        const ecpmDecay = (parseFloat(document.getElementById('ecpm_decay').value) || 100) / 100;
-        const aipuDecay = (parseFloat(document.getElementById('aipu_decay').value) || 100) / 100;
-
-        adTypes.forEach(key => {
-            const aipu = parseFloat(document.getElementById(`${key}_aipu`).value) || 0;
-            const ecpm = parseFloat(document.getElementById(`${key}_ecpm`).value) || 0;
-            
-            // 计算每种广告类型的日ARPU
-            const arpu = (ecpm / 1000) * aipu;
-            document.getElementById(`${key}_arpu`).innerText = formatMoney(arpu);
-            
-            newArpu += arpu;
-            // 留存ARPU = eCPM衰减 × 频次衰减
-            retArpu += (ecpm * ecpmDecay / 1000) * (aipu * aipuDecay);
-        });
-
-        // 更新合计ARPU
-        document.getElementById('total_arpu').innerText = formatMoney(newArpu);
-
-        const avgArpu = dau > 0 ? ((newArpu * newUsers) + (retArpu * retDau)) / dau : 0;
-
-        document.getElementById('disp_new_arpu').innerText = formatMoney(newArpu);
-        document.getElementById('disp_ret_arpu').innerText = formatMoney(retArpu);
-        document.getElementById('disp_avg_arpu').innerText = formatMoney(avgArpu);
-
-        // 财务计算
-        const retRevDaily = retDau * retArpu;
-        const newRevDaily = newUsers * newArpu;
-        const dailyRev = retRevDaily + newRevDaily;
-        const singleLtv = newArpu + (Math.max(0, lt - 1) * retArpu);
-        const totalRev = newUsers * singleLtv;
-        const totalCost = newUsers * cpa;
-        const roi = totalCost > 0 ? (totalRev / totalCost) * 100 : 0;
-
-        document.getElementById('dailyRev').innerText = formatMoney(dailyRev);
-        document.getElementById('singleLtv').innerText = formatMoney(singleLtv);
-        document.getElementById('disp_total_rev').innerText = formatMoney(totalRev);
-        document.getElementById('disp_total_cost').innerText = formatMoney(totalCost);
-
-        const roiElement = document.getElementById('roi');
-        const roiBox = document.getElementById('roi-box');
-        roiElement.innerText = roi.toFixed(2) + '%';
-
-        if (roi >= 100) {
-            roiElement.style.color = 'var(--success)';
-            roiBox.style.borderLeftColor = 'var(--success)';
-        } else {
-            roiElement.style.color = 'var(--danger)';
-            roiBox.style.borderLeftColor = 'var(--danger)';
+    // Engagement
+    new Chart(document.getElementById('chart-engagement'), {
+        type: 'bar',
+        data: {
+            labels: LABELS,
+            datasets: [
+                { label: '人均在线时长(min)', data: [34, 31, 29, 19], backgroundColor: '#2563eb77', borderColor: '#2563eb', borderWidth: 1, borderRadius: 4, yAxisID: 'y' },
+                { label: '人均广告展示(次)', data: [77.46, 43.72, 46.01, 11.92], backgroundColor: '#16a34a77', borderColor: '#16a34a', borderWidth: 1, borderRadius: 4, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, position: 'left', title: { display: true, text: '在线时长(min)' } },
+                y1: { beginAtZero: true, position: 'right', title: { display: true, text: '广告展示(次)' }, grid: { drawOnChartArea: false } }
+            }
         }
+    });
 
-        // 核心指标速览
-        document.getElementById('quick_dau').innerText = dau.toLocaleString();
-        document.getElementById('quick_ret_users').innerText = '老用户 ' + retDau.toLocaleString();
-        document.getElementById('quick_new_users').innerText = '新增 ' + newUsers.toLocaleString();
-        
-        document.getElementById('quick_dau_rev').innerText = formatMoney(dailyRev);
-        document.getElementById('quick_ret_rev').innerText = formatMoney(retRevDaily);
-        document.getElementById('quick_new_rev_part').innerText = formatMoney(newRevDaily);
-        
-        document.getElementById('quick_new_user_daily_rev').innerText = formatMoney(newRevDaily);
-        document.getElementById('quick_new_user_rev').innerText = formatMoney(singleLtv * newUsers);
-    }
+    // Daily Revenue Bar
+    new Chart(document.getElementById('chart-revenue'), {
+        type: 'bar',
+        data: {
+            labels: LABELS,
+            datasets: [{
+                label: '日流水 ($)',
+                data: [26309, 1921, 217, 233],
+                backgroundColor: ['#b4530999', '#16a34a99', '#d9770699', '#dc262699'],
+                borderColor: ['#b45309', '#16a34a', '#d97706', '#dc2626'],
+                borderWidth: 2, borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => '$' + ctx.raw.toLocaleString() } }
+            },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v) } } }
+        }
+    });
+}
 
-    // 初始化
-    calculate();
+// Init
+calculate();
+initCharts();
 </script>
-
 </body>
 </html>
