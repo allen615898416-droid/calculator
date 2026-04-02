@@ -155,11 +155,31 @@
         .table-wrapper {
             width: 100%;
             margin-bottom: 16px;
+            display: block;
         }
 
         .ad-table {
             width: 100%;
             border-collapse: collapse;
+            display: table;
+            background: #fff;
+        }
+
+        .ad-table thead {
+            display: table-header-group;
+        }
+
+        .ad-table tbody {
+            display: table-row-group;
+        }
+
+        .ad-table tr {
+            display: table-row;
+        }
+
+        .ad-table th,
+        .ad-table td {
+            display: table-cell;
         }
 
         .ad-table th {
