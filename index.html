@@ -151,54 +151,10 @@
             margin-top: 4px;
         }
 
-        /* 模块3：广告参数表格 */
-        .table-wrapper {
-            width: 100%;
-            margin-bottom: 16px;
-        }
+        /* 模块3：广告参数表格 - 已改用div布局 */
 
         .ad-table {
             width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            border: 3px solid red;
-        }
-
-        .ad-table th {
-            text-align: left;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--gray-500);
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--gray-200);
-            background: var(--gray-50);
-        }
-
-        .ad-table td {
-            padding: 10px;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .ad-table input[type="number"] {
-            width: 100%;
-            max-width: 100px;
-            padding: 6px 10px;
-            border: 1px solid var(--gray-300);
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .ad-table input[type="text"] {
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--gray-600);
-        }
-
-        .ad-table input:focus {
-            outline: none;
-            border-color: var(--primary);
         }
 
         .decay-row {
@@ -416,15 +372,7 @@
                 padding: 10px 12px;
             }
 
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .ad-table input[type="number"] {
-                max-width: 80px;
-                font-size: 16px;
-            }
+            /* 广告参数表格响应式 - 已改用div布局 */
 
             .decay-row {
                 flex-direction: column;
@@ -505,11 +453,6 @@
     </style>
 </head>
 <body>
-<!-- DEBUG: VERSION-2026-04-02-V2 | 如果看到此注释说明加载的是最新版本 -->
-
-<div style="background: #dc2626; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 14px;">
-  ⚠️ 版本 V2-2026.04.02 | 表格修复版 | 右键查看源代码搜索 "VERSION-2026-04-02-V2" 确认版本
-</div>
 
 <div class="container">
 
@@ -581,13 +524,8 @@
     <div class="module">
         <div class="module-title">📈 2. 广告参数设置（以新增用户 D0 表现为基准）</div>
 
-        <!-- 调试：如果看到这个红色框，说明模块可见 -->
-        <div style="background: yellow; border: 3px solid red; padding: 20px; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
-          🎯 调试区域：如果您看到这个黄色背景的红色框，说明模块3可见。下方应该有表格。
-        </div>
-
-        <!-- 用div布局替代table -->
-        <div style="border: 3px solid red; background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+        <!-- 广告参数表格 -->
+        <div style="background: white; padding: 0; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
             <!-- 表头 -->
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; padding: 12px 0; border-bottom: 2px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 13px; color: #64748b;">
                 <div>广告类型</div>
