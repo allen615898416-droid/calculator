@@ -155,31 +155,13 @@
         .table-wrapper {
             width: 100%;
             margin-bottom: 16px;
-            display: block;
         }
 
         .ad-table {
             width: 100%;
             border-collapse: collapse;
-            display: table;
             background: #fff;
-        }
-
-        .ad-table thead {
-            display: table-header-group;
-        }
-
-        .ad-table tbody {
-            display: table-row-group;
-        }
-
-        .ad-table tr {
-            display: table-row;
-        }
-
-        .ad-table th,
-        .ad-table td {
-            display: table-cell;
+            border: 3px solid red;
         }
 
         .ad-table th {
@@ -604,8 +586,8 @@
           🎯 调试区域：如果您看到这个黄色背景的红色框，说明模块3可见。下方应该有表格。
         </div>
 
-        <div class="table-wrapper" style="display: block !important; visibility: visible !important; overflow: visible !important; background: blue; padding: 10px;">
-            <table class="ad-table" style="display: table !important; visibility: visible !important; border: 2px solid red !important; min-height: 200px !important;">
+        <div class="table-wrapper">
+            <table class="ad-table">
                 <thead>
                     <tr>
                         <th style="width: 30%">广告类型</th>
