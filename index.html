@@ -71,14 +71,14 @@
         .lt-box { background: var(--success-light); border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px 16px; text-align: center; margin-top: 12px; }
         .lt-label { font-size: 13px; color: #166534; }
         .lt-value { font-size: 20px; font-weight: 700; color: #15803d; margin-top: 4px; }
-        .ad-table { width: 100%; border-collapse: collapse; border: 1px solid var(--gray-200); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-        .ad-table th { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); font-weight: 600; font-size: 13px; color: var(--gray-600); padding: 12px 16px; text-align: left; }
-        .ad-table td { padding: 12px 16px; border-bottom: 1px solid var(--gray-100); font-size: 14px; color: var(--gray-800); vertical-align: middle; }
-        .ad-table tr:hover td { background: var(--gray-50); }
-        .ad-table tr.ad-footer td { background: var(--gray-50); border-bottom: none; }
-        .ad-table input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-        .ad-table input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .arpu-val { font-weight: 600; color: var(--success); font-size: 15px; }
+        .ad-table-box { border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; padding: 0; }
+        .ad-table-box table { width: 100%; border-collapse: collapse; }
+        .ad-table-box th { background: #f9fafb; border-bottom: 2px solid #e5e7eb; font-weight: 600; font-size: 13px; color: #6b7280; padding: 12px 16px; text-align: left; }
+        .ad-table-box td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #1f2937; }
+        .ad-table-box tr.ad-footer td { background: #f9fafb; border-bottom: none; }
+        .ad-table-box input[type="number"] { width: 120px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+        .ad-table-box input[type="number"]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .arpu-val { font-weight: 600; color: #16a34a; font-size: 15px; }
         .decay-row { background: var(--gray-50); padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
         .decay-label { font-size: 13px; color: var(--gray-600); }
         .decay-input { display: flex; align-items: center; gap: 8px; font-size: 13px; }
@@ -118,7 +118,7 @@
             .input-row, .input-row.col4, .input-row.col2 { grid-template-columns: 1fr; }
             .arpu-bar { grid-template-columns: repeat(2, 1fr); }
             .result-grid, .wan-arpu-grid { grid-template-columns: 1fr; }
-            .ad-table input { font-size: 16px; padding: 10px 12px; }
+            .ad-table-box input[type="number"] { font-size: 16px; padding: 10px 12px; }
             .tabs { flex-wrap: wrap; } .tab-btn { font-size: 13px; padding: 10px 12px; }
         }
         @media (max-width: 480px) {
@@ -229,17 +229,19 @@
         </div>
         <div class="module">
             <div class="module-title">📈 2. 广告参数设置（以新增用户 D0 表现为基准）</div>
-            <table class="ad-table">
-                <thead>
-                    <tr><th>广告类型</th><th>eCPM ($)</th><th>人均展示/天</th><th>日ARPU</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><strong>Banner 横幅</strong></td><td><input type="number" id="ban_ecpm" value="0.35" step="0.01" oninput="calculate()"></td><td><input type="number" id="ban_aipu" value="54.19" step="0.1" oninput="calculate()"></td><td class="arpu-val" id="ban_arpu">$0.00</td></tr>
-                    <tr><td><strong>插屏广告</strong></td><td><input type="number" id="int_ecpm" value="76.02" step="0.5" oninput="calculate()"></td><td><input type="number" id="int_aipu" value="4.83" step="0.1" oninput="calculate()"></td><td class="arpu-val" id="int_arpu">$0.00</td></tr>
-                    <tr><td><strong>激励视频</strong></td><td><input type="number" id="rv_ecpm" value="178.25" step="0.5" oninput="calculate()"></td><td><input type="number" id="rv_aipu" value="0.26" step="0.01" oninput="calculate()"></td><td class="arpu-val" id="rv_arpu">$0.00</td></tr>
-                    <tr class="ad-footer"><td style="font-weight:600;">合计</td><td colspan="2" style="color:var(--gray-400);font-size:11px;">日ARPU = eCPM × 展示次数 / 1000</td><td id="total_arpu" style="font-weight:700;color:var(--primary);font-size:16px;">$0.00</td></tr>
-                </tbody>
-            </table>
+            <div class="ad-table-box">
+                <table>
+                    <thead>
+                        <tr><th>广告类型</th><th>eCPM ($)</th><th>人均展示/天</th><th>日ARPU</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Banner 横幅</strong></td><td><input type="number" id="ban_ecpm" value="0.35" step="0.01" oninput="calculate()"></td><td><input type="number" id="ban_aipu" value="54.19" step="0.1" oninput="calculate()"></td><td class="arpu-val" id="ban_arpu">$0.00</td></tr>
+                        <tr><td><strong>插屏广告</strong></td><td><input type="number" id="int_ecpm" value="76.02" step="0.5" oninput="calculate()"></td><td><input type="number" id="int_aipu" value="4.83" step="0.1" oninput="calculate()"></td><td class="arpu-val" id="int_arpu">$0.00</td></tr>
+                        <tr><td><strong>激励视频</strong></td><td><input type="number" id="rv_ecpm" value="178.25" step="0.5" oninput="calculate()"></td><td><input type="number" id="rv_aipu" value="0.26" step="0.01" oninput="calculate()"></td><td class="arpu-val" id="rv_arpu">$0.00</td></tr>
+                        <tr class="ad-footer"><td style="font-weight:600;">合计</td><td colspan="2" style="color:#9ca3af;font-size:11px;">日ARPU = eCPM × 展示次数 / 1000</td><td id="total_arpu" style="font-weight:700;color:#2563eb;font-size:16px;">$0.00</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="decay-row">
                 <div class="decay-label">💡 老用户广告衰减杠杆：</div>
                 <div class="decay-input"><span>eCPM降至</span><input type="number" id="ecpm_decay" value="70" oninput="calculate()"><span>%</span><span style="margin-left:16px;">频次降至</span><input type="number" id="aipu_decay" value="80" oninput="calculate()"><span>%</span></div>
